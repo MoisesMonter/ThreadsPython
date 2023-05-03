@@ -7,6 +7,7 @@ people ={}
 class  sockeet():
     def __init__(self):
         self.people = {}
+        self.conn = []
     
     def hope(self):
         # informação formato str + encode()
@@ -23,28 +24,51 @@ class  sockeet():
             while True:
                 # receive data stream. it won't accept data packet greater than 1024 bytes
                 data = conn.recv(1024).decode()
-                #print("new_client",data,type(data),'\t',address,type(address))
-                if str(address[0]) not in self.people:
-                    self.people ={str(address[0]):None}
-                    conn.send(self.hope())
-                else:
-                    print(str(data[:2]).lower())
-                    if str(data[:2]).lower() == '-c':
-                        if str(data[2:3]) == " ":
-                            self.people[address[0]]= data[3:]
-                        else:
-                            self.people[address[0]]= data[2:]
-                    elif str(data[:2]).lower() == '-l':
+                datainfo=str(data[3:]).lower()
+                
+                command = str(data[:2]).lower()
+                print(command)
+                print(datainfo[2:])
+        
+                if conn not in self.conn:
+                    self.conn.append(conn)
+                    self.people[address[1]] = None
+                    print(self.conn)
+                    print(self.people)
+                elif command == '-c':
+                    self.people[address[1]]= datainfo
+            
+                elif command == '-l':
                         conn.send(self.hope())
-                    else:
-                        conn.send(str(self.people[address[0]])+"Estamos esperando seu comando...".encode())
-                print(self.people)
+
+                elif command == '-g':
+                    print('chegou')
+                    print(type(self.conn[0]))
+                    for x in self.conn:
+                        print(x)
+                        x.send(datainfo.encode())
+                
+                elif command == '-u':
+                    info_name = data.split()
+                    name = str(info_name[1])
+                    print(info_name)
+                    for keys,values in self.people.items():
+                        print(values)
+                        if str(name) == str(values):
+                            for x in self.conn:
+                                if str(keys) in str(x):
+                                    print("achou novamente")
+                                    z=' '.join(info_name[2:])
+                                    x.send(z.encode())
+                else:
+                    print(self.people)
+                #print(self.people)
                 if not data:
                     # if data is not received break
                     break
-                print("from connected" + str(address) + ": " + str(data))
+                #print("from connected" + str(address) + ": " + str(data))
                 #conn.send(self.hope())  # send data to the client
-                conn.send(str(self.people[address[0]])+"Estamos esperando seu comando...".encode())
+                conn.send("Estamos esperando seu comando...".encode())
             conn.close()  # close the connection
             
         return threading.Thread(target=thread_function, args=())
@@ -74,4 +98,4 @@ if __name__ == '__main__':\
     
     sockeet().server_program(int(sys.argv[1]))
 #cd sistemas_distribuidos/socket
-#python server_chat_v1.py 3
+#python server_chat_v1.py 1
